@@ -1,9 +1,8 @@
 import cv2
 import numpy as np
 from box import Box
-from keras.models import load_model
-import pytesseract
-mnist = load_model("model.h5")
+
+net = cv2.dnn.readNetFromTensorflow("d.pb")
 
 from solver import solve
 
@@ -13,7 +12,7 @@ last_grid_cnt = 0
 stable_grid = ""
 
 cap = cv2.VideoCapture("http://192.168.43.1:8080/video")
-# cap = cv2.VideoCapture("2.jpg")
+# cap = cv2.VideoCapture("1.jpg")
 while True:
     ret, frame = cap.read()
     im = frame.copy()
@@ -100,13 +99,15 @@ while True:
                     dig = dig>127
                     to_pred.append(dig.reshape(28,28,1))
                     idx.append([i, j])
-        to_pred = np.array(to_pred)
+        to_pred = np.array(to_pred, dtype=np.float32)
         if not to_pred.shape[0] > 0:
             cv2.imshow("d", frame)
             cv2.waitKey(1)
             continue
         idx = np.array(idx)
-        pred = mnist.predict(to_pred)
+        blob = cv2.dnn.blobFromImages(to_pred)
+        net.setInput(blob)
+        pred = net.forward()
         pred[:,0]=0
         pred = pred.argmax(axis=1)
         grid[idx.T[0], idx.T[1]] = pred

@@ -20,7 +20,7 @@ y_ext = np.array(y_ext, dtype=int)
 import keras
 from keras.datasets import mnist
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Dense, Dropout, Flatten, Permute, Reshape
 from keras.layers import Conv2D, MaxPooling2D
 from keras import backend as K
 
@@ -77,11 +77,12 @@ y_test = keras.utils.to_categorical(y_test, num_classes)
 y_ext = keras.utils.to_categorical(y_ext, num_classes)
 
 model = Sequential()
-model.add(Conv2D(32, kernel_size=(3, 3),
+model.add(Conv2D(24, kernel_size=(3, 3),
                  activation='relu', strides=2,
                  input_shape=input_shape))
-model.add(Conv2D(64, (3, 3), strides=2, activation='relu'))
-model.add(Flatten())
+model.add(Conv2D(48, (3, 3), strides=2, activation='relu'))
+model.add(Permute([1,2,3]))
+model.add(Reshape((6*6*48,)))
 model.add(Dense(num_classes, activation='softmax'))
 
 model.compile(loss=keras.losses.categorical_crossentropy,
