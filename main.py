@@ -5,6 +5,7 @@ from box import Box
 net = cv2.dnn.readNetFromTensorflow("d.pb")
 
 from solver import solve
+import time
 
 solutions = {}
 last_grid = ""
@@ -13,8 +14,13 @@ stable_grid = ""
 
 cap = cv2.VideoCapture("http://192.168.43.1:8080/video")
 # cap = cv2.VideoCapture("1.jpg")
+video_writer = cv2.VideoWriter()
+video_writer.open("out.mp4", cv2.VideoWriter_fourcc('X','2','6','4'), 12, (1280,720))
 while True:
     ret, frame = cap.read()
+    if not ret:
+        video_writer.close()
+        break
     im = frame.copy()
     im_preprocess = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
     im_preprocess = cv2.GaussianBlur(im_preprocess, (11, 11), 0)
@@ -96,16 +102,16 @@ while True:
                     dig = dig[dig.mean(axis=1)>1,:]
                     dig = dig[:,cols]
                     dig = cv2.resize(dig, (28, 28), interpolation=cv2.INTER_LINEAR)
-                    dig = dig>127
                     to_pred.append(dig.reshape(28,28,1))
                     idx.append([i, j])
         to_pred = np.array(to_pred, dtype=np.float32)
         if not to_pred.shape[0] > 0:
             cv2.imshow("d", frame)
+            video_writer.write(frame)
             cv2.waitKey(1)
             continue
         idx = np.array(idx)
-        blob = cv2.dnn.blobFromImages(to_pred)
+        blob = cv2.dnn.blobFromImages(to_pred/255)
         net.setInput(blob)
         pred = net.forward()
         pred[:,0]=0
@@ -121,17 +127,23 @@ while True:
             last_grid = grid_str
         if last_grid_cnt > 2:
             stable_grid = last_grid
+        if stable_grid and (np.array(list(grid_str)) != np.array(list(stable_grid))).sum() > 4:
+            cv2.imshow("d", frame)
+            video_writer.write(frame)
+            cv2.waitKey(1)
+            continue
+
         try:
             if stable_grid in solutions:
                 assert solutions[stable_grid] != ""
                 grid_solved = solutions[stable_grid]
             else:
                 grid_solved = solve(stable_grid)
-                print(grid_solved)
                 solutions[stable_grid] = grid_solved
         except:
             solutions[stable_grid] = ""
             cv2.imshow("d", frame)
+            video_writer.write(frame)
             cv2.waitKey(1)
             continue
         grid_solved = np.array([int(i) for i in grid_solved], dtype=int).reshape(9,9)
@@ -139,48 +151,9 @@ while True:
         for i in range(9):
             for j in range(9):
                 if grid[i,j] == 0:
-                    cv2.putText(canvas, str(grid_solved[i][j]), (84*j+32, 84*(i+1)-12), cv2.FONT_HERSHEY_PLAIN, 4, (255,255,255), thickness=3)
+                    cv2.putText(canvas, str(grid_solved[i][j]), (83*j+28, 83*(i+1)-14), cv2.FONT_HERSHEY_PLAIN, 4, (255,255,255), thickness=3)
         canvas = cv2.warpPerspective(canvas, M_inv, (frame.shape[1], frame.shape[0]))
         frame[canvas>0] = (255, 0, 0)
-        cv2.imshow("d", frame)
-
-        # _, contours, hierarchy = cv2.findContours(
-        #     im_preprocess,
-        #     cv2.RETR_LIST,
-        #     cv2.CHAIN_APPROX_SIMPLE
-        # )
-
-        # im = cv2.cvtColor(im_preprocess, cv2.COLOR_GRAY2BGR)
-        # for contour in contours:
-        #     contourPerimeter = cv2.arcLength(contour, True)
-        #     hull = cv2.convexHull(contour)
-        #     contour = cv2.approxPolyDP(hull, 0.02 * contourPerimeter, True)
-        #     # if len(contour) > 4:
-        #     #     continue
-        #     cv2.drawContours(im, [contour], 0, (0, 0, 255), 2)
-
-        # lines = cv2.HoughLines(im_preprocess, 1, np.pi / 180, 100, None, 0, 0)
-    
-        # if lines is not None:
-        #     for i in range(0, len(lines)):
-        #         rho = lines[i][0][0]
-        #         theta = lines[i][0][1]
-        #         eps = 0.1
-        #         if not np.pi/2-eps < theta < np.pi/2+eps and not (theta<eps or theta>np.pi-eps):
-        #             continue
-        #         a = np.cos(theta)
-        #         b = np.sin(theta)
-        #         x0 = a * rho
-        #         y0 = b * rho
-        #         pt1 = (int(x0 + 1000*(-b)), int(y0 + 1000*(a)))
-        #         pt2 = (int(x0 - 1000*(-b)), int(y0 - 1000*(a)))
-        #         cv2.line(im_preprocess, pt1, pt2, (0,0,0), 3, cv2.LINE_AA)
-        # # kernel = np.array([
-        # #     [0,1,0],
-        # #     [1,1,1],
-        # #     [0,1,0],
-        # # ], dtype=np.uint8)
-        # # im_preprocess = cv2.morphologyEx(im_preprocess, cv2.MORPH_CLOSE, kernel)
-
-        # cv2.imshow("Demo", im_preprocess)
+    cv2.imshow("d", frame)
+    video_writer.write(frame)
     cv2.waitKey(1)

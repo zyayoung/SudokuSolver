@@ -4,7 +4,7 @@ import numpy as np
 
 x_ext = []
 y_ext = []
-for size in range(16,30):
+for size in np.linspace(16,30,100):
     for font in [cv2.FONT_ITALIC, cv2.FONT_HERSHEY_TRIPLEX, cv2.FONT_HERSHEY_SIMPLEX, cv2.FONT_HERSHEY_SCRIPT_SIMPLEX, cv2.FONT_HERSHEY_SCRIPT_COMPLEX, cv2.FONT_HERSHEY_PLAIN, cv2.FONT_HERSHEY_DUPLEX, cv2.FONT_HERSHEY_COMPLEX_SMALL, cv2.FONT_HERSHEY_COMPLEX]:
         for i in range(1,10):
             dig = np.zeros((32,32))
@@ -12,7 +12,7 @@ for size in range(16,30):
             cols = dig.mean(axis=0)>1
             dig = dig[dig.mean(axis=1)>1,:]
             dig = dig[:,cols]
-            x_ext.append(cv2.resize(dig, (28, 28), interpolation=cv2.INTER_LINEAR) > 127)
+            x_ext.append(cv2.resize(dig, (28, 28), interpolation=cv2.INTER_LINEAR))
             y_ext.append(i)
 x_ext = np.array(x_ext)
 y_ext = np.array(y_ext, dtype=int)
@@ -39,13 +39,13 @@ for i in range(len(x_train)):
     cols = dig.mean(axis=0)>1
     dig = dig[dig.mean(axis=1)>1,:]
     dig = dig[:,cols]
-    x_train[i] = cv2.resize(dig, (28, 28), interpolation=cv2.INTER_LINEAR) > 127
+    x_train[i] = cv2.resize(dig, (28, 28), interpolation=cv2.INTER_LINEAR)
 for i in range(len(x_test)):
     dig = x_test[i].copy()
     cols = dig.mean(axis=0)>1
     dig = dig[dig.mean(axis=1)>1,:]
     dig = dig[:,cols]
-    x_test[i] = cv2.resize(dig, (28, 28), interpolation=cv2.INTER_LINEAR) > 127
+    x_test[i] = cv2.resize(dig, (28, 28), interpolation=cv2.INTER_LINEAR)
 
 x_train = np.concatenate([x_train, x_ext])
 y_train = np.concatenate([y_train, y_ext])
@@ -64,8 +64,9 @@ else:
 x_train = x_train.astype('float32')
 x_ext = x_ext.astype('float32')
 x_test = x_test.astype('float32')
-# x_train /= 255
-# x_test /= 255
+x_train /= 255
+x_test /= 255
+x_ext /= 255
 
 print('x_train shape:', x_train.shape)
 print(x_train.shape[0], 'train samples')
@@ -77,12 +78,12 @@ y_test = keras.utils.to_categorical(y_test, num_classes)
 y_ext = keras.utils.to_categorical(y_ext, num_classes)
 
 model = Sequential()
-model.add(Conv2D(24, kernel_size=(3, 3),
+model.add(Conv2D(16, kernel_size=(3, 3),
                  activation='relu', strides=2,
                  input_shape=input_shape))
-model.add(Conv2D(48, (3, 3), strides=2, activation='relu'))
+model.add(Conv2D(32, (3, 3), strides=2, activation='relu'))
 model.add(Permute([1,2,3]))
-model.add(Reshape((6*6*48,)))
+model.add(Reshape((6*6*32,)))
 model.add(Dense(num_classes, activation='softmax'))
 
 model.compile(loss=keras.losses.categorical_crossentropy,
