@@ -1,12 +1,19 @@
 # SudokuSolver
 
+#### Train model
+
 ```bash
-# Train model
 python mnist.py
+```
 
-# Convert to pb
+#### Convert to pb
+
+```bash
 python cvt.py
+```
 
-# Run
+
+#### Run
+```bash
 python main.py
 ```

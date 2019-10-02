@@ -118,41 +118,11 @@ def some(seq):
         if e: return e
     return False
 
-def shuffled(seq):
-    "Return a randomly shuffled copy of the input sequence."
-    seq = list(seq)
-    random.shuffle(seq)
-    return seq
-
-################ System test ################
-
-import time, random
-
-def solved(values):
-    "A puzzle is solved if each unit is a permutation of the digits 1 to 9."
-    def unitsolved(unit): return set(values[s] for s in unit) == set(digits)
-    return values is not False and all(unitsolved(unit) for unit in unitlist)
-
-def random_puzzle(N=17):
-    """Make a random puzzle with N or more assignments. Restart on contradictions.
-    Note the resulting puzzle is not guaranteed to be solvable, but empirically
-    about 99.8% of them are solvable. Some have multiple solutions."""
-    values = dict((s, digits) for s in squares)
-    for s in shuffled(squares):
-        if not assign(values, s, random.choice(values[s])):
-            break
-        ds = [values[s] for s in squares if len(values[s]) == 1]
-        if len(ds) >= N and len(set(ds)) >= 8:
-            return ''.join(values[s] if len(values[s])==1 else '.' for s in squares)
-    return random_puzzle(N) ## Give up and make a new puzzle
-
-grid1  = '003020600900305001001806400008102900700000008006708200002609500800203009005010300'
-grid2  = '44....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......'
-hard1  = '.....6....59.....82....8....45........3........6..3.54...325..6..................'
+test_grid  = '44....8.5.3..........7......2.....6.....8.4......1.......6.3.7.5..2.....1.4......'
 
 if __name__ == '__main__':
     test()
-    print(solve(grid2))
+    print(solve(test_grid))
 
 ## References used:
 ## http://www.scanraid.com/BasicStrategies.htm
