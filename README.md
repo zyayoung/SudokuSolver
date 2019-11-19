@@ -1,5 +1,9 @@
 # SudokuSolver
 
+#### Demo
+
+![](demo.gif)
+
 #### Train model
 
 ```bash
@@ -17,3 +21,4 @@ python cvt.py
 ```bash
 python main.py
 ```
+
